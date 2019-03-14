@@ -41,7 +41,6 @@ class Calculator{
 
 		// non-terminal $exp having a single profuction rule: exp -> exp2 tail
     private int exp() throws IOException, ParseError {
-			System.out.println("exp");
 			if((lookaheadToken < '0' || lookaheadToken > '9') && (lookaheadToken != '('))
 				throw new ParseError();
 			// $exp2's result will be passed to $tail as the 1st operand of the XOR operation
@@ -50,7 +49,6 @@ class Calculator{
 		
 		// non-terminal $exp2 is pretty similar to exp, it's only rule is: exp2 -> last tail2
 		private int exp2() throws IOException, ParseError {
-			System.out.println("exp2");
 			if((lookaheadToken < '0' || lookaheadToken > '9') && (lookaheadToken != '('))
 				throw new ParseError();
 			// $last's result will be passed to $tail2 as the 1st operand of the BITWISE_AND operation
@@ -59,11 +57,8 @@ class Calculator{
 
 		// non-terminal $tail can produce the following: tail -> ^ exp2 tail | ""
 		private int tail(int fst) throws IOException, ParseError{
-			System.out.println("tail");
-
 			// in case the 1st rule was applied: tail -> ^ exp2 tail
 			if(lookaheadToken == '^'){
-				System.out.println("tail: consumed: " + (char)lookaheadToken);
 				consume('^');
 				int snd = tail(exp2());
 				return (fst ^ snd);
@@ -77,11 +72,8 @@ class Calculator{
 
 		// non-terminal $tail2 can produce the following: & last tail2 | "", pretty similar to $tail
 		private int tail2(int fst) throws IOException, ParseError{
-			System.out.println("tail2");
-
 			// in case of the 1st rule: tail2 -> & last tail2
 			if(lookaheadToken == '&'){
-				System.out.println("tail2: consumed: " + (char)lookaheadToken);
 				consume('&');
 				int snd = tail2(last());
 				return (fst & snd);
@@ -95,20 +87,15 @@ class Calculator{
 
 		// non-terminal $last can produce stuff as follows: last -> (exp) | 0 | 1 | ... | 9
 		private int last() throws IOException, ParseError{
-			System.out.println("last");
-
 			// in case the 1st rule has been applied: last -> (exp)
 			if(lookaheadToken == '('){
-				System.out.println("last: consumed: " + (char)lookaheadToken);
 				consume('(');
 				int ret_val = exp();
-				System.out.println("last: consumed: " + (char)lookaheadToken);
 				consume(')');	
 				return ret_val;		
 			}
 			// else if the 2nd rule is applied: last -> [0-9]
 			else if(lookaheadToken >= '0' && lookaheadToken <= '9'){
-				System.out.println("last: consumed: " + (char)lookaheadToken);
 				int ret_val = value(lookaheadToken);
 				consume(lookaheadToken);
 				return ret_val;
@@ -130,7 +117,7 @@ class Calculator{
 
 		// main function creates a Calculator, that gets a string representing an operation from input parses on it 
 		// and executes the operation until the character 'q' is given from input 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException{
 			System.out.println("\033[1mCalculator 0.1\n--------------\033[0m");
 			// unitl 'q' is read
 			while(true){
@@ -150,7 +137,15 @@ class Calculator{
 				}
 				catch(ParseError err){
 					System.err.println(err.getMessage());
-					//err.printStackTrace();
+
+					// clear stdin by reading until newline or EOF
+					int ch;
+					try{
+						while((ch = System.in.read()) != '\n' && ch != -1);
+					}
+					catch (IOException e) {
+						System.err.println(e.getMessage());
+					}
 				}
 			}
 			System.out.println("\033[1mCalculator\033[0m: exiting now...");
