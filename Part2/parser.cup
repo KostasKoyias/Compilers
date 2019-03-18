@@ -46,11 +46,11 @@ terminal            PLUS, LPAREN, RPAREN, LBRACK, RBRACK, COMMA, KEYWORD, PREFIX
 terminal String     IDENTIFIER, STRING_LITERAL;
 
 //  Non terminals
-non terminal        prog, def, defs, call, call_list, calls, args, arglist, comma_list, block, exp, exps, concat;//, if_else, cond, oper, opers, e;
+non terminal        prog, def, defs, call, call_list, calls, args, arglist, comma_list, block, exp, exps, str;//, if_else, cond, oper, opers, e;
 
 // Precedence Declarations
-//precedence left PREFIX, SUFFIX;
-precedence left PLUS;
+precedence left PREFIX, SUFFIX; // low  - higher in the tree 
+precedence left PLUS;           // high - deeper in the tree
 
 /*** The Grammar Rules ***/
 
@@ -94,23 +94,21 @@ def ::= call:c block:b             {: RESULT = "\tpublic static String " + c + b
 block ::= LBRACK exps:es RBRACK    {: RESULT = "{\n" + es + "\t}"; :}
 ;
 // an expression list is either empty or a newline-seperated series of expressions 
-exps ::= exps:es exp:e             {: RESULT = e + "\n" + es; :}              
+exps ::= exps:es exp:e             {: RESULT = "\t\treturn " + e + " ;\n" + es; :}              
         | /* empty */              {: RESULT = ""; :}
 ;
-// an expression is either a string or a concatenation of them or an if-else type statement
-exp ::= concat:c                   {: RESULT = "\t\treturn " + c + ";"; :}                
+// an expression returns a string by either producing an operation between two expression or returning it right away
+exp ::= exp:e1 PLUS exp:e2      {: RESULT = e1 + " + " + e2; :}
+    | str:s                     {: RESULT = s; :}
 ;
-// a concatenation consists of 1 or more '+' seperated identifiers/strings
-concat ::= concat:cs PLUS IDENTIFIER:id         {: RESULT = cs + " + " + id; :}
-        |  IDENTIFIER: id                       {: RESULT = id; :}
-        |  concat:cs PLUS STRING_LITERAL:sl     {: RESULT = cs + " + " + "\"" + sl + "\""; :}
-        |  STRING_LITERAL: sl                   {: RESULT = "\"" + sl + "\""; :}
+// a string can be produced
+str ::= IDENTIFIER:id           {: RESULT = id; :}
+     |  STRING_LITERAL:sl       {: RESULT = "\"" + sl + "\""; :}
+     |  call:c                  {: RESULT = ((String)c).replaceAll("String ",""); :} 
+     /*| if_else   
+     |  LPAREN exp:e RPAREN     {: RESULT = "(" + e + ")"; :}*/
 ;
 /*
-exp ::= CONSTANT
-    | call
-;
-
 exp ::= concat 
     | if_else
 ;
