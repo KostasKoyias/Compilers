@@ -1,0 +1,124 @@
+// Package and Import Specifications
+import java_cup.runtime.*;
+
+// Usercode Components
+parser code {:
+    // Connect this parser to a scanner!
+    Scanner s;
+    Parser(Scanner s){ this.s=s; }
+
+    // define a prefix method returning true if 1st arg is a prefix string of arg2
+    static boolean prefix(String pref, String str){
+        if(pref.length() > str.length())
+            return false;
+        int i;
+        // if any of the characters of the 1st string(starting from index: 0) 
+        // is not identical to the character at the same position of the 2nd, return false
+        for(i = 0; i < pref.length(); i++){
+            if(pref.charAt(i) != str.charAt(i))
+                return false;
+        }
+        return true;
+    }
+
+    // define a suffix method returning true if 1st arg is a suffix string of arg2
+    static boolean suffix(String suff, String str){
+        if(suff.length() > str.length())
+            return false;
+        int i;
+        // if any of the characters of the 1st string(starting from the last character and going in reverse) 
+        // is not identical to the character at the same position of the 2nd, return false
+        for(i = suff.length()-1; i >= 0; i--){
+            if(suff.charAt(i) != str.charAt(i))
+                return false;
+        }
+        return true;
+    }
+:}
+
+// define how to connect to the scanner! 
+scan with {: return s.next_token(); :};
+
+/* Symbol Lists */
+
+// Terminals (tokens returned by the scanner).
+terminal            PLUS, LPAREN, RPAREN, LBRACK, RBRACK, PREFIX, SUFFIX, COMMA, KEYWORD, IF, ELSE;
+terminal String     IDENTIFIER, CONSTANT;
+
+//  Non terminals
+non terminal        prog, def, defs, call, calls, args, arglist, comma_list;//, block, exp, exps;//, concat, if_else, cond, oper, opers, e;
+
+// Precedence Declarations
+precedence left PREFIX, SUFFIX;
+precedence left PLUS;
+
+/*** The Grammar Rules ***/
+
+// a programm is a mix of definitions and function calls
+prog ::= calls:c          {: System.out.println("public class Out{\n\tpublic static void main(String[] args){\n" + c + "\t}\n}"); :}
+;
+
+//prog ::= defs calls;
+// a call list is either empty or it has a head and a tail
+calls ::=  call:c calls:cs   {: RESULT = c + "\n" + cs; :}       
+      | /* empty */          {: RESULT = ""; :}
+;
+// a call is of type identifier arguments e.g foo(args)s
+call ::= IDENTIFIER:id args:a           {: RESULT = "\t\tSystem.out.println(" + id + a + ");"; :}
+;
+// arguments are of type (argument_list)
+args ::= LPAREN arglist:al RPAREN      {: RESULT = "(" + al + ")"; :}    
+;
+// the argument list can either be empty or a non-empty comma seperated list of constants
+arglist ::= comma_list : c                   {: RESULT = c; :}                        
+        | /* empty */                        {: RESULT = ""; :}                               
+;
+// a non-empty list of identifiers has either 1 element or a series of comma seperated elements
+comma_list ::= IDENTIFIER:id                 {: RESULT = id; :}
+        | comma_list:cl COMMA IDENTIFIER:id     {: RESULT = cl + ", " + id; :}
+;/*
+// a list of definition consists of a head and a tail
+defs ::= def defs
+        | // empty
+;
+// a function definition consist of an identifier and an argument list(like a call) and a code_block
+def ::= call:c block:b             {: System.out.println("def " + c + b);:}
+;
+// a code_block is a brackets surrounded list of newline-seperated expressions
+block ::= LBRACK exps RBRACK
+;
+// an expression list is either empty or it has a head and a tail(newline-seperated)
+exps ::= exp exps
+        | // empty 
+;
+// an expression is either a string or a concatenation of them or an if-else type statement
+exp ::= CONSTANT
+    | call
+;
+
+exp ::= concat 
+    | if_else
+;
+// a concatenation list is either a constant or a '+' seperated series of constants, where constant is an id or an id in quotes("")
+concat ::= CONSTANT
+        |  CONSTANT PLUS concat
+;
+// an if-else type statement is 
+if_else ::= IF cond exp ELSE exp
+;
+// condition is a parentheses surrounded series of operations
+cond ::= LPAREN opers RPAREN 
+;
+// a series of operations
+opers ::= exp
+        | oper
+        | oper opers 
+        | CONSTANT
+;
+// an operation involves two constant and an operator(PLUS, PREFIX or SUFFIX)
+oper ::= οper:c1 PLUS οper:c2    {: RESULT = c1 + c2; :}
+      |  οper:c1 PREFIX οper:c2  {: RESULT = Parser.prefix(c1, c2); :}
+      |  οper:c1 SUFFIX οper:c2  {: RESULT = Parser.suffix(c1, c2); :}
+      | LPAREN oper RPAREN
+      |  CONSTANT
+; */
