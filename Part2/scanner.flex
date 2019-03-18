@@ -38,7 +38,8 @@ LineTerminator = \r|\n|\r\n
 WhiteSpace     = {LineTerminator} | [ \t\f]
 
 // A literal integer is a number beginning with a decimal base digit[0-9] followed by zero or more decimal based digits in [0-9] or just a 0.  */
-keywords = if | else
+if = if 
+else = else
 identifier = [:jletter:] [:jletterdigit:]*  // or identifier = [_a-zA-Z] \w* where \w = [a-zA-Z_0-9] 
 
 %state STRING
@@ -72,7 +73,8 @@ identifier = [:jletter:] [:jletterdigit:]*  // or identifier = [_a-zA-Z] \w* whe
 }
 
 {WhiteSpace} { /* just skip what was found, do nothing */ }
-{keywords} { return symbol(sym.KEYWORD);}
+{if}         { return symbol(sym.IF);}
+{else}       { return symbol(sym.ELSE);}
 {identifier} { return symbol(sym.IDENTIFIER, new String(yytext())); }
 
 // No token was found for the input so print out an Illegal character message with the illegal character that was found. 

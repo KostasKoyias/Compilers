@@ -7,32 +7,11 @@ parser code {:
     Scanner s;
     Parser(Scanner s){ this.s=s; }
 
-    // define a prefix method returning true if 1st arg is a prefix string of arg2
-    static boolean prefix(String pref, String str){
-        if(pref.length() > str.length())
-            return false;
-        int i;
-        // if any of the characters of the 1st string(starting from index: 0) 
-        // is not identical to the character at the same position of the 2nd, return false
-        for(i = 0; i < pref.length(); i++){
-            if(pref.charAt(i) != str.charAt(i))
-                return false;
-        }
-        return true;
-    }
-
-    // define a suffix method returning true if 1st arg is a suffix string of arg2
-    static boolean suffix(String suff, String str){
-        if(suff.length() > str.length())
-            return false;
-        int i;
-        // if any of the characters of the 1st string(starting from the last character and going in reverse) 
-        // is not identical to the character at the same position of the 2nd, return false
-        for(i = suff.length()-1; i >= 0; i--){
-            if(suff.charAt(i) != str.charAt(i))
-                return false;
-        }
-        return true;
+    public static String returnExpression(String exp){
+        if(exp.contains("if"))
+                return exp;
+        else 
+                return "\t\treturn " + exp;
     }
 :}
 
@@ -42,17 +21,18 @@ scan with {: return s.next_token(); :};
 /* Symbol Lists */
 
 // Terminals (tokens returned by the scanner).
-terminal            PLUS, LPAREN, RPAREN, LBRACK, RBRACK, COMMA, KEYWORD, PREFIX, SUFFIX;//, IF, ELSE;
+terminal            PLUS, LPAREN, RPAREN, LBRACK, RBRACK, COMMA, PREFIX, SUFFIX, IF, ELSE;
 terminal String     IDENTIFIER, STRING_LITERAL;
 
 //  Non terminals
-non terminal        prog, def, defs, call, call_list, calls, args, arglist, comma_list, block, exp, exps, str;//, if_else, cond, oper, opers, e;
+non terminal        prog, def, defs, call, call_list, calls, args, arglist, comma_list, block, exp, exps, str, if_else, cond, conds, op;
 
 // Precedence Declarations
 precedence left PREFIX, SUFFIX; // low  - higher in the tree 
 precedence left PLUS;           // high - deeper in the tree
 
 /*** The Grammar Rules ***/
+start with prog;
 
 // a programm is a mix of definitions and function calls
 prog ::= defs:ds calls:cs  {: System.out.println("public class Main{\n\tpublic static void main(String[] args){\n" + cs + "\t}\n" + ds + "\n}"); :}
@@ -84,18 +64,18 @@ comma_list ::= comma_list:cl COMMA IDENTIFIER:id      {: RESULT = cl + ", " + "S
         | call:c                                      {: RESULT = c; :}
 ;
 // a list of definitions is newline-seperated
-defs ::= defs:ds def:d             {: RESULT = d + "\n" + ds; :}
-        | /*empty*/                {: RESULT = ""; :}
+defs ::= defs:ds def:d          {: RESULT = d + "\n" + ds; :}
+        | /*empty*/             {: RESULT = ""; :}
 ;
 // a function definition consists of an identifier and an argument list(like a call) and a code_block
-def ::= call:c block:b             {: RESULT = "\tpublic static String " + c + b; :}
+def ::= call:c block:b          {: RESULT = "\tpublic static String " + c + b; :}
 ;
 // a code_block is a brackets surrounded list expressions
-block ::= LBRACK exps:es RBRACK    {: RESULT = "{\n" + es + "\t}"; :}
+block ::= LBRACK exps:es RBRACK {: RESULT = "{\n" + es + "\t}"; :}
 ;
 // an expression list is either empty or a newline-seperated series of expressions 
-exps ::= exps:es exp:e             {: RESULT = "\t\treturn " + e + " ;\n" + es; :}              
-        | /* empty */              {: RESULT = ""; :}
+exps ::= exps:es exp:e          {: RESULT = returnExpression((String)e) + " ;\n" + es; :}              
+        | /* empty */           {: RESULT = ""; :}
 ;
 // an expression returns a string by either producing an operation between two expression or returning it right away
 exp ::= exp:e1 PLUS exp:e2      {: RESULT = e1 + " + " + e2; :}
@@ -105,33 +85,20 @@ exp ::= exp:e1 PLUS exp:e2      {: RESULT = e1 + " + " + e2; :}
 str ::= IDENTIFIER:id           {: RESULT = id; :}
      |  STRING_LITERAL:sl       {: RESULT = "\"" + sl + "\""; :}
      |  call:c                  {: RESULT = ((String)c).replaceAll("String ",""); :} 
-     /*| if_else   
-     |  LPAREN exp:e RPAREN     {: RESULT = "(" + e + ")"; :}*/
+     |  if_else:i               {: RESULT = i; :}
+     /*|  LPAREN exp:e RPAREN     {: RESULT = "(" + e + ")"; :}*/
 ;
-/*
-exp ::= concat 
-    | if_else
+// a typical if-then-else expression
+if_else ::= IF LPAREN conds:cs RPAREN exp:e1 ELSE exp:e2  {: RESULT = "\t\tif(" + cs + ")\n\t\t" + returnExpression((String)e1) + ";\n\t\telse" + "\n\t\t" + returnExpression((String)e2); :} 
 ;
-// a concatenation list is either a constant or a '+' seperated series of constants, where constant is an id or an id in quotes("")
-concat ::= CONSTANT
-        |  CONSTANT PLUS concat
+// a series of conditions 
+conds ::= conds:cs op:o cond:c    {: RESULT = cs + "." + o + "(" + c + ")"; :}
+        | cond:c                  {: RESULT = c; :}
 ;
-// an if-else type statement is 
-if_else ::= IF cond exp ELSE exp
+// a condition is a boolean operation between two expressions(strings)
+cond ::= exp:e1 op:o exp:e2       {: RESULT = e2 + "." + o + "(" + e1 + ")"; :}
 ;
-// condition is a parentheses surrounded series of operations
-cond ::= LPAREN opers RPAREN 
+// this language supports two boolean operations:i)prefix and ii)suffix
+op ::= PREFIX   {:RESULT = "startsWith"; :}
+    |  SUFFIX   {:RESULT = "endsWith"; :}
 ;
-// a series of operations
-opers ::= exp
-        | oper
-        | oper opers 
-        | CONSTANT
-;
-// an operation involves two constant and an operator(PLUS, PREFIX or SUFFIX)
-oper ::= οper:c1 PLUS οper:c2    {: RESULT = c1 + c2; :}
-      |  οper:c1 PREFIX οper:c2  {: RESULT = Parser.prefix(c1, c2); :}
-      |  οper:c1 SUFFIX οper:c2  {: RESULT = Parser.suffix(c1, c2); :}
-      | LPAREN oper RPAREN
-      |  CONSTANT
-; */
