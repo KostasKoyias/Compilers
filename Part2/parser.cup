@@ -42,56 +42,71 @@ scan with {: return s.next_token(); :};
 /* Symbol Lists */
 
 // Terminals (tokens returned by the scanner).
-terminal            PLUS, LPAREN, RPAREN, LBRACK, RBRACK, PREFIX, SUFFIX, COMMA, KEYWORD, IF, ELSE;
-terminal String     IDENTIFIER, CONSTANT;
+terminal            PLUS, LPAREN, RPAREN, LBRACK, RBRACK, COMMA, KEYWORD, PREFIX, SUFFIX;//, IF, ELSE;
+terminal String     IDENTIFIER, STRING_LITERAL;
 
 //  Non terminals
-non terminal        prog, def, defs, call, calls, args, arglist, comma_list;//, block, exp, exps;//, concat, if_else, cond, oper, opers, e;
+non terminal        prog, def, defs, call, call_list, calls, args, arglist, comma_list, block, exp, exps, concat;//, if_else, cond, oper, opers, e;
 
 // Precedence Declarations
-precedence left PREFIX, SUFFIX;
+//precedence left PREFIX, SUFFIX;
 precedence left PLUS;
 
 /*** The Grammar Rules ***/
 
 // a programm is a mix of definitions and function calls
-prog ::= calls:c          {: System.out.println("public class Out{\n\tpublic static void main(String[] args){\n" + c + "\t}\n}"); :}
+prog ::= defs:ds calls:cs  {: System.out.println("public class Main{\n\tpublic static void main(String[] args){\n" + cs + "\t}\n" + ds + "\n}"); :}
 ;
-
-//prog ::= defs calls;
+// calls section is either empty or it contains a function call list, new-line seperated
+calls ::= call_list:cl             {: RESULT = cl; :}
+        | /* empty */              {: RESULT = ""; :} 
+;
 // a call list is either empty or it has a head and a tail
-calls ::=  call:c calls:cs   {: RESULT = c + "\n" + cs; :}       
-      | /* empty */          {: RESULT = ""; :}
+call_list ::= call_list:cs call:c  {: RESULT = "\t\tSystem.out.println(" + ((String)c).replaceAll("String ","") + ");\n" + cs; :}       
+            | call:c               {: RESULT = "\t\tSystem.out.println(" + ((String)c).replaceAll("String ","") + ");\n"; :}
 ;
 // a call is of type identifier arguments e.g foo(args)s
-call ::= IDENTIFIER:id args:a           {: RESULT = "\t\tSystem.out.println(" + id + a + ");"; :}
+call ::= IDENTIFIER:id args:a      {: RESULT = id + a; :}
 ;
 // arguments are of type (argument_list)
-args ::= LPAREN arglist:al RPAREN      {: RESULT = "(" + al + ")"; :}    
+args ::= LPAREN arglist:al RPAREN  {: RESULT = "(" + al + ")"; :}    
 ;
 // the argument list can either be empty or a non-empty comma seperated list of constants
-arglist ::= comma_list : c                   {: RESULT = c; :}                        
-        | /* empty */                        {: RESULT = ""; :}                               
+arglist ::= comma_list : c         {: RESULT = c; :}                        
+        | /* empty */              {: RESULT = ""; :}                               
 ;
-// a non-empty list of identifiers has either 1 element or a series of comma seperated elements
-comma_list ::= IDENTIFIER:id                 {: RESULT = id; :}
-        | comma_list:cl COMMA IDENTIFIER:id     {: RESULT = cl + ", " + id; :}
-;/*
-// a list of definition consists of a head and a tail
-defs ::= def defs
-        | // empty
+// a non-empty list of identifiers has either 1 element or a series of comma seperated elements, all identifiers of this language are Strings
+comma_list ::= comma_list:cl COMMA IDENTIFIER:id      {: RESULT = cl + ", " + "String " + id; :}
+        | comma_list:cl COMMA STRING_LITERAL: sl      {: RESULT = cl + ", " + "String " + "\"" + sl + "\""; :}
+        | comma_list:cl COMMA call:c                  {: RESULT = cl + ", " + c; :}
+        | IDENTIFIER:id                               {: RESULT = "String " + id; :}
+        | STRING_LITERAL: sl                          {: RESULT = "String " + "\"" + sl + "\""; :}
+        | call:c                                      {: RESULT = c; :}
 ;
-// a function definition consist of an identifier and an argument list(like a call) and a code_block
-def ::= call:c block:b             {: System.out.println("def " + c + b);:}
+// a list of definitions is newline-seperated
+defs ::= defs:ds def:d             {: RESULT = d + "\n" + ds; :}
+        | /*empty*/                {: RESULT = ""; :}
 ;
-// a code_block is a brackets surrounded list of newline-seperated expressions
-block ::= LBRACK exps RBRACK
+// a function definition consists of an identifier and an argument list(like a call) and a code_block
+def ::= call:c block:b             {: RESULT = "\tpublic static String " + c + b; :}
 ;
-// an expression list is either empty or it has a head and a tail(newline-seperated)
-exps ::= exp exps
-        | // empty 
+// a code_block is a brackets surrounded list expressions
+block ::= LBRACK exps:es RBRACK    {: RESULT = "{\n" + es + "\t}"; :}
+;
+// an expression list is either empty or a newline-seperated series of expressions 
+exps ::= exps:es exp:e             {: RESULT = e + "\n" + es; :}              
+        | /* empty */              {: RESULT = ""; :}
 ;
 // an expression is either a string or a concatenation of them or an if-else type statement
+exp ::= concat:c                   {: RESULT = "\t\treturn " + c + ";"; :}                
+;
+// a concatenation consists of 1 or more '+' seperated identifiers/strings
+concat ::= concat:cs PLUS IDENTIFIER:id         {: RESULT = cs + " + " + id; :}
+        |  IDENTIFIER: id                       {: RESULT = id; :}
+        |  concat:cs PLUS STRING_LITERAL:sl     {: RESULT = cs + " + " + "\"" + sl + "\""; :}
+        |  STRING_LITERAL: sl                   {: RESULT = "\"" + sl + "\""; :}
+;
+/*
 exp ::= CONSTANT
     | call
 ;

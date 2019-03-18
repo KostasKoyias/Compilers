@@ -1,0 +1,15 @@
+name(){
+    "John"
+}
+
+surname(){
+    "Doe"
+}
+
+fullname(first_name, last_name){
+    first_name + "--" + last_name
+}
+
+name()
+surname()
+fullname(arg0, "var2", str1)

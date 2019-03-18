@@ -18,6 +18,7 @@ import java_cup.runtime.*;
 %{
     
     // The following two methods create java_cup.runtime.Symbol objects
+    StringBuffer stringBuffer = new StringBuffer();
     private Symbol symbol(int type) {
        return new Symbol(type, yyline, yycolumn);
     }
@@ -38,8 +39,9 @@ WhiteSpace     = {LineTerminator} | [ \t\f]
 
 // A literal integer is a number beginning with a decimal base digit[0-9] followed by zero or more decimal based digits in [0-9] or just a 0.  */
 keywords = if | else
-identifier = [:jletter:] [:jletterdigit:]*  // or identifier = [_a-zA-Z] \w* where \w = [a-zA-Z_0-9]
-constant = \" [:jletterdigit]* \" 
+identifier = [:jletter:] [:jletterdigit:]*  // or identifier = [_a-zA-Z] \w* where \w = [a-zA-Z_0-9] 
+
+%state STRING
 
 %%
 /* ------------------------Lexical Rules Section---------------------- */
@@ -53,14 +55,25 @@ constant = \" [:jletterdigit]* \"
  ")"      { return symbol(sym.RPAREN);}
  "{"      { return symbol(sym.LBRACK);}
  "}"      { return symbol(sym.RBRACK);}
+ \"       { stringBuffer.setLength(0); yybegin(STRING); }
  ","      { return symbol(sym.COMMA);}
 }
 
+<STRING> {
+      \"                             { yybegin(YYINITIAL);
+                                       return symbol(sym.STRING_LITERAL, stringBuffer.toString()); }
+      [^\n\r\"\\]+                   { stringBuffer.append( yytext() ); }
+      \\t                            { stringBuffer.append('\t'); }
+      \\n                            { stringBuffer.append('\n'); }
+
+      \\r                            { stringBuffer.append('\r'); }
+      \\\"                           { stringBuffer.append('\"'); }
+      \\                             { stringBuffer.append('\\'); }
+}
 
 {WhiteSpace} { /* just skip what was found, do nothing */ }
 {keywords} { return symbol(sym.KEYWORD);}
 {identifier} { return symbol(sym.IDENTIFIER, new String(yytext())); }
-{constant} { return symbol(sym.CONSTANT, new String(yytext()));}
 
 // No token was found for the input so print out an Illegal character message with the illegal character that was found. 
 [^] { throw new Error("Illegal character <"+yytext()+">"); }
