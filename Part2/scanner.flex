@@ -15,10 +15,9 @@ import java_cup.runtime.*;
 %unicode
 
 // Declarations :Code between %{ and %}, both of which must be at the beginning of a line, will be copied verbatim into the lexer class source.
-%{
-    
+%{ 
     // The following two methods create java_cup.runtime.Symbol objects
-    StringBuffer stringBuffer = new StringBuffer();
+    StringBuffer stringBuffer = new StringBuffer(); // used for string literals
     private Symbol symbol(int type) {
        return new Symbol(type, yyline, yycolumn);
     }
@@ -28,8 +27,8 @@ import java_cup.runtime.*;
 %}
 
 /* Macro Declarations: Regular expressions that will be used latter in the Lexical Rules Section.
-   In case of two or more match, the maximal much rule is applied. In case of same maximal length, 
-   the one listed first will be choosed, so pay attention to the order of experessions in the following list */
+   In case of two or more match, the maximal munch rule is applied. In case of same maximal length, 
+   the one listed first will be the one choosen, so pay attention to the order of experessions in the following list */
 
 // A line terminator is a \r (carriage return), \n (line feed), or \r\n. 
 LineTerminator = \r|\n|\r\n
@@ -40,7 +39,7 @@ WhiteSpace     = {LineTerminator} | [ \t\f]
 // A literal integer is a number beginning with a decimal base digit[0-9] followed by zero or more decimal based digits in [0-9] or just a 0.  */
 if = if 
 else = else
-identifier = [:jletter:] [:jletterdigit:]*  // or identifier = [_a-zA-Z] \w* where \w = [a-zA-Z_0-9] 
+identifier = [:jletter:] [:jletterdigit:]*  // has lower rank than keywords, so that identifiers don't override them
 
 %state STRING
 
@@ -60,6 +59,7 @@ identifier = [:jletter:] [:jletterdigit:]*  // or identifier = [_a-zA-Z] \w* whe
  ","      { return symbol(sym.COMMA);}
 }
 
+/* changing state to <STRING> when a quote is encountered, string's content is placed in a buffer passed up to the parser */
 <STRING> {
       \"                             { yybegin(YYINITIAL);
                                        return symbol(sym.STRING_LITERAL, stringBuffer.toString()); }

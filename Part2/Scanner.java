@@ -387,9 +387,8 @@ class Scanner implements java_cup.runtime.Scanner {
   private int zzFinalHighSurrogate = 0;
 
   /* user code: */
-    
     // The following two methods create java_cup.runtime.Symbol objects
-    StringBuffer stringBuffer = new StringBuffer();
+    StringBuffer stringBuffer = new StringBuffer(); // used for string literals
     private Symbol symbol(int type) {
        return new Symbol(type, yyline, yycolumn);
     }

@@ -10,7 +10,7 @@ parser code {:
     // a function that distinquishes the <if-else> expression from the others. All other expressions are reduced to a String and returned
     public static String returnExpression(String exp){
         if(exp.contains("if"))
-                return "\t" + exp.replaceAll("\n", "\n\t");
+                return "\t" + exp.replaceAll("\n", "\n\t"); // fixing identation
         else 
                 return "\treturn " + exp;
     }
@@ -26,7 +26,7 @@ terminal            PLUS, LPAREN, RPAREN, LBRACK, RBRACK, COMMA, PREFIX, SUFFIX,
 terminal String     IDENTIFIER, STRING_LITERAL;
 
 //  Non terminals
-non terminal        prog, def, defs, call, call_list, calls, args, arglist, comma_list, block, exp, exps, str, if_else, cond, conds, op;
+non terminal        prog, def, defs, call, call_list, calls, args, arglist, comma_list, block, exp, str, if_else, cond, conds, op;
 
 // Precedence Declarations
 precedence left PREFIX, SUFFIX; // low  - higher in the tree 
@@ -57,12 +57,8 @@ arglist ::= comma_list : c         {: RESULT = c; :}
         | /* empty */              {: RESULT = ""; :}                               
 ;
 // a non-empty list of identifiers has either 1 element or a series of comma seperated elements, all identifiers of this language are Strings
-comma_list ::= comma_list:cl COMMA IDENTIFIER:id      {: RESULT = cl + ", " + "String " + id; :}
-        | comma_list:cl COMMA STRING_LITERAL: sl      {: RESULT = cl + ", " + "String " + "\"" + sl + "\""; :}
-        | comma_list:cl COMMA call:c                  {: RESULT = cl + ", " + c; :}
-        | IDENTIFIER:id                               {: RESULT = "String " + id; :}
-        | STRING_LITERAL: sl                          {: RESULT = "String " + "\"" + sl + "\""; :}
-        | call:c                                      {: RESULT = c; :}
+comma_list ::= comma_list:cl COMMA str:s      {: RESULT = cl + ", " + "String " + s; :}
+            | exp:e                           {: RESULT = "String " + e; :}
 ;
 // a list of definitions is newline-seperated
 defs ::= defs:ds def:d          {: RESULT = d + "\n" + ds; :}
@@ -71,12 +67,8 @@ defs ::= defs:ds def:d          {: RESULT = d + "\n" + ds; :}
 // a function definition consists of an identifier and an argument list(like a call) and a code_block
 def ::= call:c block:b          {: RESULT = "\tpublic static String " + c + b; :}
 ;
-// a code_block is a brackets surrounded list expressions
-block ::= LBRACK exps:es RBRACK {: RESULT = "{\n" + es + "\t}"; :}
-;
-// an expression list is either empty or a newline-seperated series of expressions 
-exps ::= exp:e exps:es          {: RESULT = "\t" + returnExpression((String)e).replaceAll("\n", "\n\t") + ";\n" + es; :}              
-        | /* empty */           {: RESULT = ""; :}
+// a code_block is a bracket surrounded SINGLE expression
+block ::= LBRACK exp:e RBRACK {: RESULT = "{\n\t" + returnExpression((String)e).replaceAll("\n", "\n\t") + ";\n\t}"; :}
 ;
 // an expression returns a string by either producing an operation between two expression or returning it right away
 exp ::= exp:e1 PLUS exp:e2      {: RESULT = e1 + " + " + e2; :}

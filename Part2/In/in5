@@ -1,0 +1,21 @@
+repeat(x) {
+    x + x
+}
+
+cond_repeat(c, x) {
+    if (c + x prefix repeat("no" + "sir") + c)
+        if("no" prefix c)
+            repeat(x)
+        else
+            x + "x in quotes"
+    else
+        if(if(c prefix "yessir") "yessir" else "nosir" suffix x + "yessir")
+	    x
+	else
+	    repeat(repeat(x))
+}
+
+cond_repeat("n", "os")
+cond_repeat("nos", "ir")
+cond_repeat("yes", "Tarzan")
+cond_repeat("fourth", "4times") 

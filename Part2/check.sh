@@ -1,7 +1,7 @@
 #!/bin/bash
-make execute < ${1-"input/in1"} > Out/Main.java
+make execute < ${1-"In/in1"} > Out/Main.java
 sed -i '1d' Out/Main.java
-pr -mt ${1-"input/in1"} Out/Main.java -W "$(tput cols)"
+pr -mt ${1-"In/in1"} Out/Main.java -W "$(tput cols)"
 cd Out;javac Main.java
 if [ $? -eq 0 ] 
 then

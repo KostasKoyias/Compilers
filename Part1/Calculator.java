@@ -31,7 +31,11 @@ class Calculator{
     private void consume(int symbol) throws IOException, ParseError {
 			if (lookaheadToken != symbol)
 				throw new ParseError();
-			lookaheadToken = in.read();
+			
+			// get the next character, ignoring tabs ands spaces
+			do{
+				lookaheadToken = in.read();
+			}while(lookaheadToken == ' ' || lookaheadToken == '\t');
     }
 
 		// convert a character representing an integer to the integer 

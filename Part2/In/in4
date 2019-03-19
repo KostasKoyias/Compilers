@@ -1,0 +1,21 @@
+name()  {
+    "John"
+}
+
+surname() {
+    "Doe"
+}
+
+foo(some_name){
+    some_name
+} 
+
+fullname(first_name, sep, last_name) {
+    if(foo("comp") + "il" prefix "compiler")
+    	foo(name() + "ys") + " got the name" + sep + first_name + "ys from his grandpa"  
+    else
+	name()
+}
+
+name()
+fullname(name(), " ", surname())
