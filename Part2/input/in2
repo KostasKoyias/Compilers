@@ -18,3 +18,4 @@ cond_repeat(c, x) {
 
 cond_repeat("yes", name())
 cond_repeat("no", "Jane")
+cond_repeat("ye", "Tarzan")

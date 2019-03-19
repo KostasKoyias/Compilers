@@ -7,11 +7,12 @@ parser code {:
     Scanner s;
     Parser(Scanner s){ this.s=s; }
 
+    // a function that distinquishes the <if-else> expression from the others. All other expressions are reduced to a String and returned
     public static String returnExpression(String exp){
         if(exp.contains("if"))
-                return exp;
+                return "\t" + exp.replaceAll("\n", "\n\t");
         else 
-                return "\t\treturn " + exp;
+                return "\treturn " + exp;
     }
 :}
 
@@ -42,7 +43,7 @@ calls ::= call_list:cl             {: RESULT = cl; :}
         | /* empty */              {: RESULT = ""; :} 
 ;
 // a call list is either empty or it has a head and a tail
-call_list ::= call_list:cs call:c  {: RESULT = "\t\tSystem.out.println(" + ((String)c).replaceAll("String ","") + ");\n" + cs; :}       
+call_list ::= call:c call_list:cs  {: RESULT = "\t\tSystem.out.println(" + ((String)c).replaceAll("String ","") + ");\n" + cs; :}       
             | call:c               {: RESULT = "\t\tSystem.out.println(" + ((String)c).replaceAll("String ","") + ");\n"; :}
 ;
 // a call is of type identifier arguments e.g foo(args)s
@@ -74,7 +75,7 @@ def ::= call:c block:b          {: RESULT = "\tpublic static String " + c + b; :
 block ::= LBRACK exps:es RBRACK {: RESULT = "{\n" + es + "\t}"; :}
 ;
 // an expression list is either empty or a newline-seperated series of expressions 
-exps ::= exps:es exp:e          {: RESULT = returnExpression((String)e) + " ;\n" + es; :}              
+exps ::= exp:e exps:es          {: RESULT = "\t" + returnExpression((String)e).replaceAll("\n", "\n\t") + ";\n" + es; :}              
         | /* empty */           {: RESULT = ""; :}
 ;
 // an expression returns a string by either producing an operation between two expression or returning it right away
@@ -89,14 +90,14 @@ str ::= IDENTIFIER:id           {: RESULT = id; :}
      /*|  LPAREN exp:e RPAREN     {: RESULT = "(" + e + ")"; :}*/
 ;
 // a typical if-then-else expression
-if_else ::= IF LPAREN conds:cs RPAREN exp:e1 ELSE exp:e2  {: RESULT = "\t\tif(" + cs + ")\n\t\t" + returnExpression((String)e1) + ";\n\t\telse" + "\n\t\t" + returnExpression((String)e2); :} 
+if_else ::= IF LPAREN conds:cs RPAREN exp:e1 ELSE exp:e2  {: RESULT = "if(" + cs + ")\n" + returnExpression((String)e1) + ";\nelse" + "\n" + returnExpression((String)e2); :} 
 ;
 // a series of conditions 
-conds ::= conds:cs op:o cond:c    {: RESULT = cs + "." + o + "(" + c + ")"; :}
-        | cond:c                  {: RESULT = c; :}
+conds ::= conds:cs op:o cond:c  {: RESULT = cs + "." + o + "(" + c + ")"; :}
+        | cond:c                {: RESULT = c; :}
 ;
 // a condition is a boolean operation between two expressions(strings)
-cond ::= exp:e1 op:o exp:e2       {: RESULT = e2 + "." + o + "(" + e1 + ")"; :}
+cond ::= exp:e1 op:o exp:e2       {: RESULT = "(" + e2 + ")." + o + "(" + e1 + ")"; :}
 ;
 // this language supports two boolean operations:i)prefix and ii)suffix
 op ::= PREFIX   {:RESULT = "startsWith"; :}

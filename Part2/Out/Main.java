@@ -1,23 +1,17 @@
 public class Main{
 	public static void main(String[] args){
-		System.out.println(findLangType("Typescript"));
-		System.out.println(findLangType("Javascript"));
-		System.out.println(findLangType("Java"));
+		System.out.println(name());
+		System.out.println(surname());
+		System.out.println(fullname(name(), " ", surname()));
 	}
-	public static String findLangType(String langName){
-		if(langName.startsWith("Java"))
-				if("Java".startsWith(langName))
-				return "Static";
-		else
-				if(langName.endsWith("script"))
-				return "Dynamic";
-		else
-				return "Unknown";
-		else
-				if(langName.endsWith("script"))
-				return "Probably Dynamic";
-		else
-				return "Unknown" ;
+	public static String fullname(String first_name, String sep, String last_name){
+		return first_name + sep + last_name;
+	}
+	public static String surname(){
+		return "Doe";
+	}
+	public static String name(){
+		return "John";
 	}
 
 }
