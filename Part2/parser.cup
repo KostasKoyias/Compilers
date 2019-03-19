@@ -6,14 +6,6 @@ parser code {:
     // Connect this parser to a scanner!
     Scanner s;
     Parser(Scanner s){ this.s=s; }
-
-    // a function that distinquishes the <if-else> expression from the others. All other expressions are reduced to a String and returned
-    public static String returnExpression(String exp){
-        if(exp.contains("if"))
-                return "\t" + exp.replaceAll("\n", "\n\t"); // fixing identation
-        else 
-                return "\treturn " + exp;
-    }
 :}
 
 // define how to connect to the scanner! 
@@ -26,7 +18,7 @@ terminal            PLUS, LPAREN, RPAREN, LBRACK, RBRACK, COMMA, PREFIX, SUFFIX,
 terminal String     IDENTIFIER, STRING_LITERAL;
 
 //  Non terminals
-non terminal        prog, def, defs, call, call_list, calls, args, arglist, comma_list, block, exp, str, if_else, cond, conds, op;
+non terminal        prog, def, defs, call, call_list, calls, args, arglist, comma_list, block, exp, str, if_else, cond, op;
 
 // Precedence Declarations
 precedence left PREFIX, SUFFIX; // low  - higher in the tree 
@@ -46,18 +38,18 @@ calls ::= call_list:cl             {: RESULT = cl; :}
 call_list ::= call:c call_list:cs  {: RESULT = "\t\tSystem.out.println(" + ((String)c).replaceAll("String ","") + ");\n" + cs; :}       
             | call:c               {: RESULT = "\t\tSystem.out.println(" + ((String)c).replaceAll("String ","") + ");\n"; :}
 ;
-// a call is of type identifier arguments e.g foo(args)s
+// a call is of type identifier arguments e.g foo(arg0, arg1)
 call ::= IDENTIFIER:id args:a      {: RESULT = id + a; :}
 ;
 // arguments are of type (argument_list)
 args ::= LPAREN arglist:al RPAREN  {: RESULT = "(" + al + ")"; :}    
 ;
-// the argument list can either be empty or a non-empty comma seperated list of constants
+// the argument list can either be empty or a non-empty comma seperated list of expressions
 arglist ::= comma_list : c         {: RESULT = c; :}                        
         | /* empty */              {: RESULT = ""; :}                               
 ;
-// a non-empty list of identifiers has either 1 element or a series of comma seperated elements, all identifiers of this language are Strings
-comma_list ::= comma_list:cl COMMA str:s      {: RESULT = cl + ", " + "String " + s; :}
+// a non-empty list of identifiers has either 1 element or a series of comma seperated expressions, all of them are eventually evaluated in a String
+comma_list ::= comma_list:cl COMMA exp:e      {: RESULT = cl + ", " + "String " + e; :}
             | exp:e                           {: RESULT = "String " + e; :}
 ;
 // a list of definitions is newline-seperated
@@ -68,27 +60,23 @@ defs ::= defs:ds def:d          {: RESULT = d + "\n" + ds; :}
 def ::= call:c block:b          {: RESULT = "\tpublic static String " + c + b; :}
 ;
 // a code_block is a bracket surrounded SINGLE expression
-block ::= LBRACK exp:e RBRACK {: RESULT = "{\n\t" + returnExpression((String)e).replaceAll("\n", "\n\t") + ";\n\t}"; :}
+block ::= LBRACK exp:e RBRACK {: RESULT = "{\n\t\treturn " + e + ";\n\t}"; :}
 ;
 // an expression returns a string by either producing an operation between two expression or returning it right away
 exp ::= exp:e1 PLUS exp:e2      {: RESULT = e1 + " + " + e2; :}
     | str:s                     {: RESULT = s; :}
 ;
-// a string can be produced
+// a string can be an id or a string_literal, it can also be the return value of a function_call or of an if/else statement
 str ::= IDENTIFIER:id           {: RESULT = id; :}
      |  STRING_LITERAL:sl       {: RESULT = "\"" + sl + "\""; :}
      |  call:c                  {: RESULT = ((String)c).replaceAll("String ",""); :} 
      |  if_else:i               {: RESULT = i; :}
      /*|  LPAREN exp:e RPAREN     {: RESULT = "(" + e + ")"; :}*/
 ;
-// a typical if-then-else expression
-if_else ::= IF LPAREN conds:cs RPAREN exp:e1 ELSE exp:e2  {: RESULT = "if(" + cs + ")\n" + returnExpression((String)e1) + ";\nelse" + "\n" + returnExpression((String)e2); :} 
+// a typical inline if/else statement using operators ? and :
+if_else ::= IF LPAREN cond:c RPAREN exp:e1 ELSE exp:e2  {: RESULT = c + "?" + e1 + ":" + e2; :} 
 ;
-// a series of conditions 
-conds ::= conds:cs op:o cond:c  {: RESULT = cs + "." + o + "(" + c + ")"; :}
-        | cond:c                {: RESULT = c; :}
-;
-// a condition is a boolean operation between two expressions(strings)
+// a condition is a boolean operation between two expressions(Strings)
 cond ::= exp:e1 op:o exp:e2       {: RESULT = "(" + e2 + ")." + o + "(" + e1 + ")"; :}
 ;
 // this language supports two boolean operations:i)prefix and ii)suffix
