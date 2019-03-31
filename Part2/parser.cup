@@ -71,10 +71,10 @@ str ::= IDENTIFIER:id           {: RESULT = id; :}
      |  STRING_LITERAL:sl       {: RESULT = "\"" + sl + "\""; :}
      |  call:c                  {: RESULT = ((String)c).replaceAll("String ",""); :} 
      |  if_else:i               {: RESULT = i; :}
-     /*|  LPAREN exp:e RPAREN     {: RESULT = "(" + e + ")"; :}*/
+     |  LPAREN exp:e RPAREN     {: RESULT = "(" + e + ")"; :}
 ;
 // a typical inline if/else statement using operators ? and :
-if_else ::= IF LPAREN cond:c RPAREN exp:e1 ELSE exp:e2  {: RESULT = c + "?" + e1 + ":" + e2; :} 
+if_else ::= IF LPAREN cond:c RPAREN exp:e1 ELSE exp:e2  {: RESULT = "(" + c + "?" + e1 + ":" + e2 + ")"; :} 
 ;
 // a condition is a boolean operation between two expressions(Strings)
 cond ::= exp:e1 op:o exp:e2       {: RESULT = "(" + e2 + ")." + o + "(" + e1 + ")"; :}

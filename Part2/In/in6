@@ -1,0 +1,26 @@
+sasa () {
+	if ("y" prefix "yz")
+		"yes"
+	else
+		"no"
+
+	+
+
+	if ("y" prefix "yz")
+		"+yes2"
+	else
+		"+no2"
+
+	+
+
+	if ("y" prefix "yz")
+		"+yes3"
+	else
+		"+no3"
+
+	+
+
+	"WOW"
+}
+
+sasa()
