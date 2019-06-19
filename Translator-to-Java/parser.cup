@@ -31,12 +31,8 @@ start with prog;
 prog ::= defs:ds calls:cs  {: System.out.println("public class Main{\n\tpublic static void main(String[] args){\n" + cs + "\t}\n" + ds + "\n}"); :}
 ;
 // calls section is either empty or it contains a function call list, new-line seperated
-calls ::= call_list:cl             {: RESULT = cl; :}
+calls ::= call:c calls:cs          {: RESULT = "\t\tSystem.out.println(" + ((String)c).replaceAll("String ","") + ");\n" + cs; :} 
         | /* empty */              {: RESULT = ""; :} 
-;
-// a call list is either empty or it has a head and a tail
-call_list ::= call:c call_list:cs  {: RESULT = "\t\tSystem.out.println(" + ((String)c).replaceAll("String ","") + ");\n" + cs; :}       
-            | call:c               {: RESULT = "\t\tSystem.out.println(" + ((String)c).replaceAll("String ","") + ");\n"; :}
 ;
 // a call is of type identifier arguments e.g foo(arg0, arg1)
 call ::= IDENTIFIER:id args:a      {: RESULT = id + a; :}
